@@ -1,0 +1,39 @@
+{
+  "name": "attendance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "npx knex migrate:latest",
+    "seed": "npx knex seed:run",
+    "reset-db": "npx knex migrate:rollback && npx knex migrate:latest && npx knex seed:run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vauxgomes/attendance.git"
+  },
+  "keywords": [
+    "class",
+    "attendance"
+  ],
+  "author": "Vaux Gomes",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vauxgomes/attendance/issues"
+  },
+  "homepage": "https://github.com/vauxgomes/attendance#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^8.5.1",
+    "knex": "^2.3.0",
+    "sqlite3": "^5.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
