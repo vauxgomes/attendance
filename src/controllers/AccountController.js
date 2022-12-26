@@ -10,7 +10,7 @@ module.exports = {
       const { username, password } = req.body
 
       const user = await knex
-        .select('id', 'name', 'password', 'role')
+        .select('id', 'name', 'password', 'role', 'status')
         .from('users')
         .where('username', username)
         .first()
@@ -21,7 +21,8 @@ module.exports = {
           {
             id: user.id,
             name: user.name,
-            role: user.role
+            role: user.role,
+            status: user.status
           },
           process.env.TOKEN_SECRET,
           {

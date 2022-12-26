@@ -38,8 +38,7 @@ routes.post(
   '/users/create',
   auth,
   permissions([roles.ROOT]),
-  UsersController.create,
-  UsersController.show
+  UsersController.create
 )
 routes.put(
   '/users/:id/update/',

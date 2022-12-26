@@ -9,7 +9,14 @@ exports.up = function (knex) {
     table.string('username', 20).unique().notNullable()
     table.string('password', 100).notNullable()
 
-    table.enu('role', ['ROOT', 'SUPER', 'ADMIN', 'USER']).notNullable()
+    table
+      .enu('role', ['ROOT', 'SUPER', 'ADMIN', 'USER'])
+      .notNullable()
+      .defaultTo('USER')
+    table
+      .enu('status', ['ACTIVE', 'INACTIVE'])
+      .notNullable()
+      .defaultTo('ACTIVE')
 
     table.timestamp('created_at').notNullable().defaultTo(knex.fn.now())
     table.timestamp('updated_at').notNullable().defaultTo(knex.fn.now())

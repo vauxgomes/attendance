@@ -1,8 +1,6 @@
 const knex = require('../database')
 const bcrypt = require('bcrypt')
 
-const { roles } = require('../middlewares/roles')
-
 // Controller
 module.exports = {
   // Index
@@ -10,9 +8,9 @@ module.exports = {
     const { page = 1 } = req.query
 
     const query = knex
-      .select('id', 'name', 'username', 'role')
+      .select('id', 'name', 'username', 'role', 'status')
       .from('users')
-      .orderBy('username')
+      .orderBy('name')
 
     query
       .limit(process.env.PAGE_SIZE)
@@ -36,23 +34,27 @@ module.exports = {
   // Create as Middleware
   async create(req, res, next) {
     try {
-      let { name, username, password, role = roles.USER } = req.body
+      let { name, username, password, role, status } = req.body
 
       // Preparing password
       password = bcrypt.hashSync(password, Number(process.env.SALT))
 
-      const [id] = await knex('users')
+      let [id] = await knex('users')
         .insert({
           name,
           username,
           password,
-          role
+          role,
+          status
         })
         .returning('id')
 
-      req.params.id = typeof id === 'object' ? id.id : id
-      next()
+      // Safety
+      id = typeof id === 'object' ? id.id : id
+
+      return res.json({ id })
     } catch (err) {
+      console.log(err)
       return res.status(400).json({
         success: false,
         message: 'users.create.nok'
@@ -63,7 +65,7 @@ module.exports = {
   // Update
   async update(req, res) {
     const { id } = req.params
-    let { campus_id, username, password, role } = req.body
+    let { campus_id, username, password, role, status } = req.body
 
     if (password) {
       password = bcrypt.hashSync(password, Number(process.env.SALT))
@@ -75,7 +77,7 @@ module.exports = {
           username,
           password,
           role,
-          campus_id
+          status
         })
         .where({ id })
 
