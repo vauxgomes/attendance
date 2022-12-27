@@ -16,12 +16,14 @@ exports.seed = async function (knex) {
   await knex('users').insert([
     {
       name: 'Root',
+      code: '007',
       username: 'root',
       password: hashSync('root@attendance', SALT),
       role: roles.ROOT
     },
     {
       name: 'User',
+      code: '001',
       username: 'user',
       password: hashSync('user@attendance', SALT),
       role: roles.USER

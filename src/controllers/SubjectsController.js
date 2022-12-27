@@ -59,21 +59,10 @@ module.exports = {
   async update(req, res) {
     const { course_id, id } = req.params
 
-    let { profile_id, name, short, workload, mandatory, color, order } =
-      req.body
+    const { name } = req.body
 
     try {
-      await knex('subjects')
-        .update({
-          profile_id,
-          name,
-          short,
-          workload,
-          mandatory,
-          color,
-          order
-        })
-        .where({ id, course_id })
+      await knex('subjects').update({ name }).where({ id, course_id })
 
       return res.status(200).send({
         success: true,

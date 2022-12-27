@@ -8,7 +8,7 @@ module.exports = {
     const { page = 1 } = req.query
 
     const query = knex
-      .select('id', 'name', 'username', 'role', 'status')
+      .select('id', 'name', 'code', 'username', 'role', 'status')
       .from('users')
       .orderBy('name')
 
@@ -18,23 +18,10 @@ module.exports = {
       .then((users) => res.send(users))
   },
 
-  // Show
-  async show(req, res) {
-    const { id = req.user.id } = req.params
-
-    const user = await knex
-      .select('id', 'username', 'role')
-      .from('users')
-      .where({ 'users.id': id })
-      .first()
-
-    return res.json(user)
-  },
-
   // Create as Middleware
   async create(req, res, next) {
     try {
-      let { name, username, password, role, status } = req.body
+      let { name, code, username, password, role, status } = req.body
 
       // Preparing password
       password = bcrypt.hashSync(password, Number(process.env.SALT))
@@ -42,6 +29,7 @@ module.exports = {
       let [id] = await knex('users')
         .insert({
           name,
+          code,
           username,
           password,
           role,
@@ -65,7 +53,7 @@ module.exports = {
   // Update
   async update(req, res) {
     const { id } = req.params
-    let { campus_id, username, password, role, status } = req.body
+    let { campus_id, name, code, username, password, role, status } = req.body
 
     if (password) {
       password = bcrypt.hashSync(password, Number(process.env.SALT))
@@ -74,6 +62,8 @@ module.exports = {
     try {
       await knex('users')
         .update({
+          name,
+          code,
           username,
           password,
           role,
