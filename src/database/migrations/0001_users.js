@@ -15,7 +15,7 @@ exports.up = function (knex) {
       .notNullable()
       .defaultTo('USER')
     table
-      .enu('status', ['ACTIVE', 'INACTIVE'])
+      .enu('status', ['ACTIVE', 'INACTIVE', 'PENDING'])
       .notNullable()
       .defaultTo('ACTIVE')
 

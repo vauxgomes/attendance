@@ -1,53 +1,80 @@
 const knex = require('../database')
-const { roles } = require('../middlewares/roles')
+const { statuses } = require('../middleware/statuses')
 
 // Controller
 module.exports = {
-  // Index/Get
+  // Index
   async index(req, res) {
     const { subject_id } = req.params
-    const { page, visible = true } = req.query
+    const { page = 1 } = req.query
 
-    const query = knex
+    const classes = await knex
       .select(
         'classes.id',
         'classes.name',
-        'classes.visible',
+        'classes.status',
         'subjects.id as subject_id',
-        'subjects.name as subject_name'
+        'subjects.name as subject_name',
+        'users.id as user_id',
+        'users.name as user_name'
       )
       .from('classes')
       .innerJoin('subjects', 'subjects.id', 'classes.subject_id')
-      .where({ subject_id, visible })
+      .innerJoin('users', 'users.id', 'classes.user_id')
+      .where({ subject_id })
+      .limit(Number(process.env.PAGE_SIZE))
+      .offset((Math.max(1, Number(page)) - 1) * Number(process.env.PAGE_SIZE))
+      .orderBy(['classes.name'])
 
-    if (!!page) {
-      query
-        .limit(Number(process.env.PAGE_SIZE))
-        .offset((Math.max(1, Number(page)) - 1) * Number(process.env.PAGE_SIZE))
-    }
+    return res.send(classes)
+  },
 
-    query.orderBy(['classes.name']).then((subjects) => {
-      res.send(subjects)
-    })
+  // Index by user
+  async indexByUser(req, res) {
+    const { page = 1 } = req.query
+
+    const classes = await knex
+      .select(
+        'classes.id',
+        'classes.name',
+        'classes.status',
+        'subjects.id as subject_id',
+        'subjects.name as subject_name',
+        'users.id as user_id',
+        'users.name as user_name',
+        'favorite_classes.class_id as favorite'
+      )
+      .from('classes')
+      .innerJoin('subjects', 'subjects.id', 'classes.subject_id')
+      .innerJoin('users', 'users.id', 'classes.user_id')
+      .leftJoin('favorite_classes', 'favorite_classes.class_id', 'classes.id')
+      .where({
+        'users.id': req.user.id,
+        'classes.status': statuses.ACTIVE
+      })
+      .limit(Number(process.env.PAGE_SIZE))
+      .offset((Math.max(1, Number(page)) - 1) * Number(process.env.PAGE_SIZE))
+      .orderBy(['classes.name'])
+
+    return res.send(classes)
   },
 
   // Create
   async create(req, res) {
     const { subject_id } = req.params
-    const { name } = req.body
+    const { user_id, name, status = statuses.ACTIVE } = req.body
 
     try {
-      let [id] = await knex('classes')
+      const [class_] = await knex('classes')
         .insert({
           subject_id,
-          name
+          user_id,
+          name,
+          status
         })
-        .returning('id')
+        .returning('*')
 
-      // Safety
-      id = typeof id === 'object' ? id.id : id
-
-      return res.json({ id })
+      return res.json(class_)
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -59,11 +86,14 @@ module.exports = {
   // Update
   async update(req, res) {
     const { subject_id, id } = req.params
+    const { user_id, name, status } = req.body
 
-    let { name } = req.body
+    console.log({ user_id, name, status })
 
     try {
-      await knex('classes').update({ name }).where({ id, subject_id })
+      await knex('classes')
+        .update({ user_id, name, status })
+        .where({ id, subject_id })
 
       return res.status(200).send({
         success: true,
@@ -83,7 +113,7 @@ module.exports = {
     const { subject_id, id } = req.params
 
     try {
-      await knex('classes').where({ id, subject_id }).del()
+      await knex('classes').where({ subject_id, id }).del()
 
       return res.status(200).send({
         success: true,

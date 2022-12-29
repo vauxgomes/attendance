@@ -1,9 +1,10 @@
-const status = {
+const statuses = {
   ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE'
+  INACTIVE: 'INACTIVE',
+  PENDING: 'PENDING'
 }
 
-const statuses = (status) => {
+const statusValidation = (status) => {
   return (req, res, next) => {
     if (status === req.user.status) {
       return res.status(401).json({
@@ -16,4 +17,4 @@ const statuses = (status) => {
   }
 }
 
-module.exports = { statuses, status }
+module.exports = { statusValidation, statuses }

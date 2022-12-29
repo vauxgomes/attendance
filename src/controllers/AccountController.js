@@ -20,6 +20,7 @@ module.exports = {
         const token = jwt.sign(
           {
             id: user.id,
+            code: user.code,
             name: user.name,
             role: user.role,
             status: user.status
@@ -42,7 +43,7 @@ module.exports = {
         })
       }
     } catch (err) {
-      console.log(err)
+      // console.log(err)
       return res.status(400).json({
         success: false,
         message: 'users.registration.error'

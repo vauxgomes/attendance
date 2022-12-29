@@ -1,33 +1,42 @@
 const knex = require('../database')
-const { roles } = require('../middlewares/roles')
+const { statuses } = require('../middleware/statuses')
 
 // Controller
 module.exports = {
-  // Index/Get
+  // Index
   async index(req, res) {
     const { course_id } = req.params
-    const { page } = req.query
+    const { page = 1 } = req.query
 
-    const query = knex
+    const subjects = await knex
       .select(
         'subjects.id',
         'subjects.name',
+        'subjects.status',
         'subjects.course_id',
-        'courses.name as course_name'
+        'courses.name as course_name',
+        'subjects.created_at',
+        'subjects.updated_at'
       )
       .from('subjects')
       .innerJoin('courses', 'courses.id', 'subjects.course_id')
       .where({ course_id })
+      .limit(Number(process.env.PAGE_SIZE))
+      .offset((Math.max(1, Number(page)) - 1) * Number(process.env.PAGE_SIZE))
+      .orderBy(['subjects.name'])
 
-    if (!!page) {
-      query
-        .limit(Number(process.env.PAGE_SIZE))
-        .offset((Math.max(1, Number(page)) - 1) * Number(process.env.PAGE_SIZE))
-    }
+    return res.send(subjects)
+  },
 
-    query.orderBy(['subjects.name']).then((subjects) => {
-      res.send(subjects)
-    })
+  // List
+  async list(req, res) {
+    const subjects = await knex
+      .select('subjects.id', 'subjects.name')
+      .from('subjects')
+      .where({ status: statuses.ACTIVE })
+      .orderBy(['subjects.name'])
+
+    return res.send(subjects)
   },
 
   // Create
@@ -36,17 +45,15 @@ module.exports = {
     const { name } = req.body
 
     try {
-      let [id] = await knex('subjects')
+      const [subject] = await knex('subjects')
         .insert({
           course_id,
-          name
+          name,
+          status: statuses.ACTIVE
         })
-        .returning('id')
+        .returning('*')
 
-      // Safety
-      id = typeof id === 'object' ? id.id : id
-
-      return res.json({ id })
+      return res.json(subject)
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -58,11 +65,10 @@ module.exports = {
   // Update
   async update(req, res) {
     const { course_id, id } = req.params
-
-    const { name } = req.body
+    const { name, status } = req.body
 
     try {
-      await knex('subjects').update({ name }).where({ id, course_id })
+      await knex('subjects').update({ name, status }).where({ id, course_id })
 
       return res.status(200).send({
         success: true,

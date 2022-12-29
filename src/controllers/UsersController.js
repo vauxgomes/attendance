@@ -1,32 +1,52 @@
 const knex = require('../database')
 const bcrypt = require('bcrypt')
 
+const { roles } = require('../middleware/roles')
+const { statuses } = require('../middleware/statuses')
+
 // Controller
 module.exports = {
   // Index
   async index(req, res) {
     const { page = 1 } = req.query
 
-    const query = knex
+    const users = await knex
       .select('id', 'name', 'code', 'username', 'role', 'status')
       .from('users')
-      .orderBy('name')
-
-    query
       .limit(process.env.PAGE_SIZE)
       .offset((Math.max(1, page) - 1) * process.env.PAGE_SIZE)
-      .then((users) => res.send(users))
+      .orderBy(['name', 'code'])
+
+    return res.send(users)
   },
 
-  // Create as Middleware
-  async create(req, res, next) {
+  // List
+  async list(req, res) {
+    const users = await knex
+      .select('id', 'name')
+      .from('users')
+      .where({ role: roles.USER, status: statuses.ACTIVE })
+      .orderBy(['name'])
+
+    return res.send(users)
+  },
+
+  // Create
+  async create(req, res) {
     try {
-      let { name, code, username, password, role, status } = req.body
+      let {
+        name,
+        code,
+        username,
+        password,
+        role = roles.USER,
+        status = statuses.PENDING
+      } = req.body
 
       // Preparing password
       password = bcrypt.hashSync(password, Number(process.env.SALT))
 
-      let [id] = await knex('users')
+      const [user] = await knex('users')
         .insert({
           name,
           code,
@@ -35,14 +55,11 @@ module.exports = {
           role,
           status
         })
-        .returning('id')
+        .returning(['id', 'name', 'code', 'username', 'role', 'status'])
 
-      // Safety
-      id = typeof id === 'object' ? id.id : id
-
-      return res.json({ id })
+      return res.json(user)
     } catch (err) {
-      console.log(err)
+      // console.log(err)
       return res.status(400).json({
         success: false,
         message: 'users.create.nok'
@@ -53,8 +70,9 @@ module.exports = {
   // Update
   async update(req, res) {
     const { id } = req.params
-    let { campus_id, name, code, username, password, role, status } = req.body
+    let { name, code, username, password, role, status } = req.body
 
+    // Preparing password
     if (password) {
       password = bcrypt.hashSync(password, Number(process.env.SALT))
     }

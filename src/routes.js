@@ -2,10 +2,10 @@
 const express = require('express')
 const routes = express.Router()
 
-// Middlewares
-const auth = require('./middlewares/auth')
-const { roles, permissions } = require('./middlewares/roles')
-// const delay = require('./middlewares/delay')
+// Middleware
+const auth = require('./middleware/auth')
+const { roles, permissions } = require('./middleware/roles')
+// const delay = require('./middleware/delay')
 
 // Controllers
 const AccountController = require('./controllers/AccountController')
@@ -14,8 +14,8 @@ const StudentsController = require('./controllers/StudentsController')
 const CoursesController = require('./controllers/CoursesController')
 const SubjectsController = require('./controllers/SubjectsController')
 const ClassesController = require('./controllers/ClassesController')
-const ClassesStudentsController = require('./controllers/ClassesStudentsController')
 const AttendancesController = require('./controllers/AttendancesController')
+const ClassesStudentsController = require('./controllers/ClassesStudentsController')
 const FavoriteClassesController = require('./controllers/FavoriteClassesController')
 
 // System
@@ -27,6 +27,7 @@ routes.get('/', (req, res) => {
 routes.post('/login', AccountController.register)
 
 // Users
+routes.get('/users/list', auth, UsersController.list)
 routes.get(
   '/users',
   auth,
@@ -53,6 +54,7 @@ routes.delete(
 )
 
 // Students
+routes.get('/students/list', auth, StudentsController.list)
 routes.get(
   '/students',
   auth,
@@ -79,6 +81,7 @@ routes.delete(
 )
 
 // Courses
+routes.get('/courses/list', auth, CoursesController.list)
 routes.get(
   '/courses',
   auth,
@@ -105,6 +108,7 @@ routes.delete(
 )
 
 // Subjects
+routes.get('/subjects/list', auth, SubjectsController.list)
 routes.get(
   '/courses/:course_id/subjects',
   auth,
@@ -155,6 +159,21 @@ routes.delete(
   permissions([roles.ROOT, roles.SUPER]),
   ClassesController.delete
 )
+routes.get('/classes', auth, ClassesController.indexByUser)
+
+// Attendances
+routes.get(
+  '/classes/:class_id/attendances/:date',
+  auth,
+  permissions([roles.ADMIN, roles.USER]),
+  AttendancesController.index
+)
+routes.post(
+  '/classes/:class_id/attendances/create',
+  auth,
+  permissions([roles.ADMIN, roles.USER]),
+  AttendancesController.create
+)
 
 // Class Students
 routes.get(
@@ -164,7 +183,7 @@ routes.get(
   ClassesStudentsController.index
 )
 routes.post(
-  '/classes/:class_id/students/:student_id/create',
+  '/classes/:class_id/students/create',
   auth,
   permissions([roles.ROOT, roles.SUPER, roles.ADMIN]),
   ClassesStudentsController.create
@@ -176,43 +195,23 @@ routes.delete(
   ClassesStudentsController.delete
 )
 
-// Attendances
-routes.get(
-  '/classes/:class_id/attendances',
-  auth,
-  permissions([roles.ADMIN, roles.USER]),
-  AttendancesController.index
-)
-routes.get(
-  '/classes/:class_id/:date/attendances',
-  auth,
-  permissions([roles.ADMIN, roles.USER]),
-  AttendancesController.show
-)
-routes.post(
-  '/classes/:class_id/attendances/create',
-  auth,
-  permissions([roles.ADMIN, roles.USER]),
-  AttendancesController.create
-)
-
 // Favorite Classes
 routes.get(
-  '/classes/favorite',
+  '/favorites',
   auth,
-  permissions([roles.ADMIN, roles.USER]),
+  permissions([roles.USER]),
   FavoriteClassesController.index
 )
 routes.post(
-  '/classes/favorites/create',
+  '/favorites/create',
   auth,
-  permissions([roles.ADMIN, roles.USER]),
+  permissions([roles.USER]),
   FavoriteClassesController.create
 )
 routes.delete(
-  '/classes/:class_id/favorites/delete',
+  '/favorites/:class_id/delete',
   auth,
-  permissions([roles.ADMIN, roles.USER]),
+  permissions([roles.USER]),
   FavoriteClassesController.delete
 )
 

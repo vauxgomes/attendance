@@ -1,20 +1,31 @@
 const knex = require('../database')
+const { statuses } = require('../middleware/statuses')
 
 // Controller
 module.exports = {
   // Index
   async index(req, res) {
-    const { page } = req.query
+    const { page = 1 } = req.query
 
-    const query = knex.select().from('students')
+    const students = await knex
+      .select()
+      .from('students')
+      .limit(process.env.PAGE_SIZE)
+      .offset((Math.max(1, page) - 1) * process.env.PAGE_SIZE)
+      .orderBy(['name', 'code'])
 
-    if (!!page) {
-      query
-        .limit(Number(process.env.PAGE_SIZE))
-        .offset((Math.max(1, Number(page)) - 1) * Number(process.env.PAGE_SIZE))
-    }
+    return res.send(students)
+  },
 
-    query.orderBy(['name']).then((courses) => res.send(courses))
+  // List
+  async list(req, res) {
+    const students = await knex
+      .select('id', 'name', 'code')
+      .from('students')
+      .where({ status: statuses.ACTIVE })
+      .orderBy(['name', 'code'])
+
+    return res.send(students)
   },
 
   // Create
@@ -22,17 +33,14 @@ module.exports = {
     try {
       const { code, name } = req.body
 
-      let [id] = await knex('students')
+      const [student] = await knex('students')
         .insert({
           code,
           name
         })
-        .returning('id')
+        .returning('*')
 
-      // Safety
-      id = typeof id === 'object' ? id.id : id
-
-      return res.json({ id })
+      return res.json(student)
     } catch (err) {
       return res.status(400).json({
         success: false,
