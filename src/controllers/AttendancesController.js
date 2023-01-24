@@ -37,10 +37,17 @@ module.exports = {
         'students.status as student_status'
       )
       .from('students')
+      .innerJoin('class_students', function () {
+        this.on('class_students.student_id', 'students.id').andOnVal(
+          'class_students.class_id',
+          '=',
+          class_id
+        )
+      })
       .leftJoin('attendances', function () {
         this.on('attendances.student_id', 'students.id')
-          .andOnVal('attendances.date', '=', date)
           .andOnVal('attendances.class_id', '=', class_id)
+          .andOnVal('attendances.date', '=', date)
       })
       .leftJoin('classes', 'classes.id', 'attendances.class_id')
       .where({ 'students.status': statuses.ACTIVE })

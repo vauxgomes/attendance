@@ -88,8 +88,6 @@ module.exports = {
     const { subject_id, id } = req.params
     const { user_id, name, status } = req.body
 
-    console.log({ user_id, name, status })
-
     try {
       await knex('classes')
         .update({ user_id, name, status })
@@ -100,7 +98,6 @@ module.exports = {
         message: 'classes.update.ok'
       })
     } catch (err) {
-      console.log(err)
       return res.status(400).send({
         success: false,
         message: 'classes.update.nok'
